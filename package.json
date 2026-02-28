@@ -3,13 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server.js",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "postinstall": "prisma generate --schema ../prisma/schema.prisma && node -e \"require('fs').cpSync('../node_modules/.prisma/client', '.prisma/client', {recursive: true, force: true})\""
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.22.1",
+    "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.14.0",
     "next": "16.1.6",
+    "pdfkit": "^0.15.2",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
@@ -20,6 +28,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

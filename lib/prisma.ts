@@ -1,0 +1,40 @@
+import { PrismaClient } from "@prisma/client"
+import { join } from "path"
+
+const globalForPrisma = global as unknown as { prisma?: PrismaClient }
+
+export function getPrismaClient() {
+  if (!globalForPrisma.prisma) {
+    try {
+      console.log("[Prisma] Current working directory:", process.cwd())
+      console.log("[Prisma] Looking for query engine at:")
+      console.log("  - ", join(process.cwd(), ".prisma/client/query_engine-windows.dll.node"))
+      console.log("  - ", join(process.cwd(), "../node_modules/.prisma/client/query_engine-windows.dll.node"))
+      
+      globalForPrisma.prisma = new PrismaClient({
+        log:
+          process.env.NODE_ENV === "development"
+            ? ["query", "error", "warn"]
+            : ["error"],
+      })
+      
+      console.log("[Prisma] Client initialized successfully")
+    } catch (e) {
+      console.error("[Prisma] Initialization error:", e)
+      throw e
+    }
+  }
+  return globalForPrisma.prisma
+}
+
+export const prisma = {
+  get user() {
+    return getPrismaClient().user
+  },
+  get attendance() {
+    return getPrismaClient().attendance
+  },
+  $connect: () => getPrismaClient().$connect(),
+  $disconnect: () => getPrismaClient().$disconnect(),
+} as any
+

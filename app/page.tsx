@@ -1,65 +1,162 @@
-import Image from "next/image";
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function Home() {
+  const router = useRouter()
+  const [status, setStatus] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // coordinates center Lamkawee Aceh
+  const TARGET_LAT = 5.5025285
+  const TARGET_LNG = 95.3324727
+  const ALLOWED_RADIUS_KM = 0.5
+  
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371
+    const dLat = toRad(lat2 - lat1)
+    const dLon = toRad(lon2 - lon1)
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+  }
+
+  useEffect(() => {
+    checkLogin()
+  }, [])
+
+  const checkLogin = () => {
+    const userId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("userId="))
+      ?.split("=")[1]
+    setIsLoggedIn(!!userId)
+  }
+
+  const handleLogout = () => {
+    document.cookie = "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"
+    setIsLoggedIn(false)
+    setStatus("Logout berhasil")
+    setTimeout(() => {
+      router.push("/login")
+    }, 500)
+  }
+
+  const handleAbsen = async () => {
+    setLoading(true)
+    setStatus("Mengambil lokasi...")
+
+    if (!navigator.geolocation) {
+      setStatus("Browser tidak mendukung GPS ❌")
+      setLoading(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+        const distance = haversine(latitude, longitude, TARGET_LAT, TARGET_LNG)
+        if (distance > ALLOWED_RADIUS_KM) {
+          setStatus("Anda harus berada di Desa Lamkawee untuk absen ❌")
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch("/api/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lat: latitude,
+            lng: longitude,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) setStatus(data.error || "Gagal absen ❌")
+        else setStatus("Absensi berhasil ✅")
+
+        setLoading(false)
+      },
+      () => {
+        setStatus("GPS tidak diizinkan ❌")
+        setLoading(false)
+      },
+      { enableHighAccuracy: true }
+    )
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-6">
+      {isLoggedIn && (
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Link
+            href="/my-attendance"
+            className="bg-white hover:bg-gray-100 text-blue-600 font-bold py-2 px-4 rounded-lg transition"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Lihat Absensi
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition"
           >
-            Documentation
-          </a>
+            Logout
+          </button>
         </div>
-      </main>
+      )}
+
+      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md text-center">
+
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          Absensi Mahasiswa KKN
+        </h1>
+
+        <p className="text-gray-500 mb-6">
+          Pastikan Anda berada di lokasi KKN
+        </p>
+
+        <button
+          onClick={handleAbsen}
+          disabled={loading}
+          className={`w-full py-3 rounded-lg text-white font-semibold transition 
+          ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
+        >
+          {loading ? "Memproses..." : "Absen Sekarang"}
+        </button>
+
+        {status && (
+          <div className="mt-5 text-sm font-medium text-gray-700">
+            {status}
+          </div>
+        )}
+
+        {!isLoggedIn && (
+          <div className="mt-6 pt-6 border-t border-gray-300 text-center">
+            <p className="text-gray-600 mb-3">Belum punya akun?</p>
+            <div className="flex gap-2 justify-center">
+              <Link
+                href="/login"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Daftar
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }

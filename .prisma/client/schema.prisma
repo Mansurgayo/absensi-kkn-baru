@@ -1,0 +1,35 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = []
+  output          = "../absensi-kkn-app/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String
+  universitas      String?
+  nim              String?
+  role             String    @default("USER") // USER or ADMIN
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+
+  attendances Attendance[]
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  userId    String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

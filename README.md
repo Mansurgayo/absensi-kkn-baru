@@ -2,18 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies and start the custom server which combines Next.js with an Express endpoint for PDF generation:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
+The `dev` script now launches `server.js`, an Express app integrated with Next.js. It exposes `/admin/attendance-report` to generate a PDF using PDFKit.
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
