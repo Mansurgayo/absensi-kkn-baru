@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
     "lint": "next lint",
     "postinstall": "prisma generate --schema ../prisma/schema.prisma && node -e \"require('fs').cpSync('../node_modules/.prisma/client', '.prisma/client', {recursive: true, force: true})\""
   },

@@ -33,20 +33,33 @@ async function verifyAdmin(req, res, next) {
 
 async function fetchAttendances(startDate, endDate, search) {
   const where = {};
+  const filters = [];
+
+  // Add date filter
   if (startDate || endDate) {
-    where.createdAt = {};
-    if (startDate) where.createdAt.gte = new Date(startDate + 'T00:00:00Z');
-    if (endDate) where.createdAt.lte = new Date(endDate + 'T23:59:59Z');
+    const dateFilter = { createdAt: {} };
+    if (startDate) dateFilter.createdAt.gte = new Date(startDate + 'T00:00:00Z');
+    if (endDate) dateFilter.createdAt.lte = new Date(endDate + 'T23:59:59Z');
+    filters.push(dateFilter);
   }
 
   // Add search filter
   if (search) {
-    where.OR = [
-      { user: { name: { contains: search, mode: 'insensitive' } } },
-      { user: { email: { contains: search, mode: 'insensitive' } } },
-      { user: { universitas: { contains: search, mode: 'insensitive' } } },
-      { user: { nim: { contains: search, mode: 'insensitive' } } },
-    ];
+    filters.push({
+      OR: [
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { user: { universitas: { contains: search, mode: 'insensitive' } } },
+        { user: { nim: { contains: search, mode: 'insensitive' } } },
+      ],
+    });
+  }
+
+  // Combine all filters with AND
+  if (filters.length === 1) {
+    Object.assign(where, filters[0]);
+  } else if (filters.length > 1) {
+    where.AND = filters;
   }
 
   const attendances = await prisma.attendance.findMany({
@@ -68,55 +81,99 @@ async function fetchAttendances(startDate, endDate, search) {
 }
 
 function buildPdfStream(attendances, res) {
-  const doc = new PDFDocument({ size: 'A4', margin: 40 });
-
-  // pipe PDF data straight to response
+  // Set headers BEFORE creating document
   res.setHeader('Content-Type', 'application/pdf');
-  // recommend setting Content-Disposition for download
   res.setHeader('Content-Disposition', 'attachment; filename="laporan_absensi.pdf"');
 
-  doc.pipe(res);
+  try {
+    const doc = new PDFDocument({ size: 'A4', margin: 40 });
 
-  // header
-  doc.fontSize(16).text('LAPORAN ABSENSI KKN', { align: 'center' });
-  doc.moveDown(0.5);
-  const now = new Date();
-  doc.fontSize(10).text(`Tanggal: ${now.toLocaleDateString('id-ID')}  Waktu: ${now.toLocaleTimeString('id-ID')}`, { align: 'left' });
-  doc.moveDown(1);
-
-  // table header
-  const tableTop = doc.y;
-  const columnSpacing = 70;
-  const columns = ['No', 'Nama', 'Email', 'Universitas', 'NIM', 'Tanggal & Jam', 'Lat', 'Lng'];
-
-  columns.forEach((col, i) => {
-    doc.font('Helvetica-Bold').fontSize(9).text(col, 40 + i * columnSpacing, tableTop);
-  });
-
-  // rows
-  let i = 0;
-  attendances.forEach((att) => {
-    const rowY = tableTop + 20 + i * 20;
-    const values = [
-      i + 1,
-      att.user.name,
-      att.user.email,
-      att.user.universitas || '-',
-      att.user.nim || '-',
-      new Date(att.createdAt).toLocaleString('id-ID'),
-      att.latitude.toFixed(6),
-      att.longitude.toFixed(6),
-    ];
-    values.forEach((val, j) => {
-      doc.font('Helvetica').fontSize(8).text(val.toString(), 40 + j * columnSpacing, rowY, {
-        width: columnSpacing - 4,
-        ellipsis: true,
-      });
+    // Handle errors during PDF generation
+    doc.on('error', (err) => {
+      console.error('PDF Document error:', err);
+      res.end();
     });
-    i += 1;
-  });
 
-  doc.end();
+    // Handle stream errors
+    res.on('error', (err) => {
+      console.error('Response stream error:', err);
+      doc.end();
+    });
+
+    doc.pipe(res);
+
+    // header
+    doc.fontSize(16).text('LAPORAN ABSENSI KKN', { align: 'center' });
+    doc.moveDown(0.5);
+    const now = new Date();
+    doc.fontSize(10).text(`Tanggal: ${now.toLocaleDateString('id-ID')}  Waktu: ${now.toLocaleTimeString('id-ID')}`, { align: 'left' });
+    doc.moveDown(1);
+
+    if (attendances.length === 0) {
+      doc.fontSize(12).text('Tidak ada data absensi untuk ditampilkan.', { align: 'center' });
+      doc.end();
+      return;
+    }
+
+    // table header with dynamic column widths
+    const pageMargin = 40;
+    const pageWidth = 595 - (pageMargin * 2); // A4 width
+    const rowHeight = 15;
+    let tableTop = doc.y;
+
+    const columns = ['No', 'Nama', 'Email', 'Universitas', 'NIM', 'Tanggal & Jam', 'Lat', 'Lng'];
+    const columnWidths = [30, 80, 100, 80, 60, 100, 45, 45]; // adjusted widths
+
+    // Draw table header
+    doc.font('Helvetica-Bold').fontSize(8);
+    let xPos = pageMargin;
+    for (let i = 0; i < columns.length; i++) {
+      doc.text(columns[i], xPos, tableTop, { width: columnWidths[i], align: 'left' });
+      xPos += columnWidths[i];
+    }
+
+    tableTop += rowHeight;
+    doc.moveTo(pageMargin, tableTop).lineTo(pageMargin + pageWidth, tableTop).stroke();
+    tableTop += 5;
+
+    // rows
+    doc.font('Helvetica').fontSize(7);
+    for (let i = 0; i < attendances.length; i++) {
+      const att = attendances[i];
+
+      // Check if we need a new page
+      if (tableTop > 750) {
+        doc.addPage();
+        tableTop = pageMargin + 20;
+      }
+
+      const values = [
+        (i + 1).toString(),
+        att.user.name,
+        att.user.email,
+        att.user.universitas || '-',
+        att.user.nim || '-',
+        new Date(att.createdAt).toLocaleString('id-ID'),
+        att.latitude.toFixed(6),
+        att.longitude.toFixed(6),
+      ];
+
+      xPos = pageMargin;
+      for (let j = 0; j < values.length; j++) {
+        doc.text(values[j], xPos, tableTop, { width: columnWidths[j], align: 'left' });
+        xPos += columnWidths[j];
+      }
+
+      tableTop += rowHeight;
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error('buildPdfStream error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'PDF generation failed' });
+    }
+  }
 }
 
 app.prepare().then(() => {
