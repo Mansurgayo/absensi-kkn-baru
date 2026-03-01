@@ -1,3 +1,9 @@
+// ensure DATABASE_URL exists before Prisma client is imported
+// this must happen at module load time to satisfy schema validation
+if (!process.env.DATABASE_URL) {
+  console.warn('[Prisma] WARNING: DATABASE_URL is not defined, falling back to sqlite dev.db');
+  process.env.DATABASE_URL = 'file:./prisma/dev.db';
+}
 import { PrismaClient } from "@prisma/client"
 import { join } from "path"
 
