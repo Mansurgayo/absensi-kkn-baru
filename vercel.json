@@ -1,5 +1,6 @@
 {
+  "root": "absensi-kkn-app",
   "builds": [
-    { "src": "absensi-kkn-app/package.json", "use": "@vercel/next" }
+    { "src": "package.json", "use": "@vercel/next" }
   ]
 }
