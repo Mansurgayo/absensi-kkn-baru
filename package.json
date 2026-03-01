@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate --schema ../prisma/schema.prisma && node -e \"require('fs').cpSync('../node_modules/.prisma/client', '.prisma/client', {recursive: true, force: true})\""
+    "postinstall": "prisma generate && node -e \"require('fs').cpSync('node_modules/.prisma/client', '.prisma/client', {recursive: true, force: true})\"",
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
