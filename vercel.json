@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd absensi-kkn-app && npm run build",
-  "outputDirectory": "absensi-kkn-app/.next"
+  "root": "absensi-kkn-app"
 }
+
 

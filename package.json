@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd absensi-kkn-app && next dev",
-    "build": "cd absensi-kkn-app && next build",
-    "start": "cd absensi-kkn-app && next start",
-    "lint": "cd absensi-kkn-app && next lint",
-    "postinstall": "cd absensi-kkn-app && prisma generate --schema ../prisma/schema.prisma && node -e \"require('fs').cpSync('../node_modules/.prisma/client', '.prisma/client', {recursive: true, force: true})\""
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate --schema ../prisma/schema.prisma && node -e \"require('fs').cpSync('../node_modules/.prisma/client', '.prisma/client', {recursive: true, force: true})\""
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
