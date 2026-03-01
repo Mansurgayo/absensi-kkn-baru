@@ -1,7 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = []
-  output          = "../absensi-kkn-app/.prisma/client"
 }
 
 datasource db {

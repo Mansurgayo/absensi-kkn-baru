@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     })
 
-    const formattedAttendances = attendances.map((att) => ({
+    const formattedAttendances = attendances.map((att: any) => ({
       id: att.id,
       userId: att.userId,
       userName: att.user.name,

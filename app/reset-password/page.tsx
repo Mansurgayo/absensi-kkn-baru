@@ -1,13 +1,13 @@
 "use client"
+export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
+  const [token, setToken] = useState<string | null>(null)
 
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -16,10 +16,11 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState("")
 
   useEffect(() => {
-    if (!token) {
-      setError("Token reset password tidak valid")
-    }
-  }, [token])
+    const params = new URLSearchParams(window.location.search)
+    const t = params.get("token")
+    setToken(t)
+    if (!t) setError("Token reset password tidak valid")
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
