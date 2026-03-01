@@ -3,6 +3,12 @@ import { join } from "path"
 
 const globalForPrisma = global as unknown as { prisma?: PrismaClient }
 
+// when running on Vercel without a DATABASE_URL, provide a harmless fallback
+if (!process.env.DATABASE_URL) {
+  console.warn('[Prisma] WARNING: DATABASE_URL is not defined, falling back to sqlite dev.db (not persistent)');
+  process.env.DATABASE_URL = 'file:./prisma/dev.db';
+}
+
 export function getPrismaClient() {
   if (!globalForPrisma.prisma) {
     try {
