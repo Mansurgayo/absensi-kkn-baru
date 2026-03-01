@@ -1,0 +1,50 @@
+name: Migrate and Seed Database
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  migrate-and-seed:
+    name: Migrate and Seed (runs only if DATABASE_URL is set)
+    runs-on: ubuntu-latest
+    if: ${{ secrets.DATABASE_URL != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Create admin user (optional)
+        if: ${{ secrets.ADMIN_EMAIL && secrets.ADMIN_PASSWORD }}
+        run: |
+          set -e
+          echo "Seeding admin user..."
+          export DATABASE_URL="${{ secrets.DATABASE_URL }}"
+          export EMAIL="${{ secrets.ADMIN_EMAIL }}"
+          export PASSWORD="${{ secrets.ADMIN_PASSWORD }}"
+          NAME_VAR="${{ secrets.ADMIN_NAME }}"
+          if [ -z "$NAME_VAR" ]; then
+            export NAME="Administrator"
+          else
+            export NAME="$NAME_VAR"
+          fi
+          node scripts/create-admin.js
+        shell: bash
