@@ -7,10 +7,10 @@ try {
     process.exit(1);
   }
   
-  console.log('[build] DATABASE_URL detected, running migrations...');
+  console.log('[build] DATABASE_URL detected, syncing database schema...');
   
-  console.log('[build] running prisma migrations...');
-  execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+  console.log('[build] pushing schema to database...');
+  execSync('npx prisma db push --skip-generate', { stdio: 'inherit' });
   
   console.log('[build] creating/updating admin user...');
   try {
