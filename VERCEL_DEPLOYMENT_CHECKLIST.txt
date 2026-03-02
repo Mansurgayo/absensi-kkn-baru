@@ -1,0 +1,99 @@
+✅ VERCEL DEPLOYMENT CHECKLIST
+
+## Pre-Deployment Tasks (Completed)
+- ✅ Frontend & Backend properly connected (relative /api URLs)
+- ✅ vercel.json configured with build settings
+- ✅ .env.example updated with production instructions
+- ✅ Deployment guide created (DEPLOYMENT_GUIDE.md)
+- ✅ Code pushed to GitHub (main branch)
+- ✅ Build script handles missing DATABASE_URL gracefully
+
+## Steps to Deploy Now
+
+### Step 1: Setup PostgreSQL Database
+Choose one of these services:
+- Neon (Free tier): https://neon.tech → Create project → Copy DB URL
+- Supabase (Free tier): https://supabase.com → Create project → Copy connection string
+- Railway: https://railway.app → New project → PostgreSQL
+
+Get your DATABASE_URL like: postgres://user:password@host:5432/dbname
+
+### Step 2: Deploy via Vercel (Choose One Method)
+
+**METHOD A: GitHub Integration (Easiest)**
+1. Go to https://vercel.com/new
+2. Click "Import Git Repository"
+3. Select: Mansurgayo/absensi-kkn-baru
+4. Framework Preset: Next.js (should auto-detect)
+5. Click "Deploy"
+6. Wait for deployment to complete (2-3 minutes)
+
+**METHOD B: Vercel CLI**
+```bash
+npm i -g vercel
+cd e:\absensi-kkn-app
+vercel
+```
+Follow prompts to setup new project.
+
+### Step 3: Add Environment Variable to Vercel
+After deployment starts:
+1. Go to Vercel Project → Settings → Environment Variables
+2. Add new variable:
+   - Name: DATABASE_URL
+   - Value: postgres://user:password@host:5432/dbname
+3. Redeploy with Vercel CLI: `vercel --prod`
+
+### Step 4: Setup Admin User
+
+Run locally with production database:
+```powershell
+cd e:\absensi-kkn-app
+$env:DATABASE_URL="postgres://user:password@host:5432/dbname"
+$env:EMAIL="admin@example.com"
+$env:PASSWORD="admin123"  # Change this!
+$env:NAME="Administrator"
+node scripts/create-admin.js
+```
+
+### Step 5: Test Deployment
+- Open: https://your-app-name.vercel.app
+- Login with: admin@example.com / admin123
+- Try: Attendance feature, Admin Dashboard, etc.
+- Check browser console for any errors
+
+## Expected Results (If Everything Works)
+
+✅ Frontend loads without errors
+✅ API routes respond (relative URLs working)
+✅ Login works with admin credentials
+✅ Admin dashboard accessible
+✅ Database migrations applied automatically
+✅ Attendance recording works
+✅ PDF generation works
+
+## Monitoring After Deploy
+
+1. Check Vercel Logs: Project → Deployments → Logs
+2. Monitor Performance: Project → Analytics
+3. Check Errors: Project → Functions → Logs
+
+## If Something Goes Wrong
+
+Problem: "Unable to open database file"
+→ DATABASE_URL not set in Vercel or wrong format
+
+Problem: "API not responding"
+→ Check Function Logs in Vercel console
+→ Verify migrations ran during build
+
+Problem: "Login returns 500 error"
+→ Check Database connection
+→ Verify admin user exists
+→ Check Function Logs
+
+Need Help? Check DEPLOYMENT_GUIDE.md for detailed troubleshooting.
+
+---
+Repository: https://github.com/Mansurgayo/absensi-kkn-baru
+Ready to deploy! 🚀
