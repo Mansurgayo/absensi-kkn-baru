@@ -5,8 +5,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  // if DATABASE_URL isn't set, fall back to a local sqlite file (development only)
-  url      = env("DATABASE_URL", "file:./prisma/dev.db")
+  url      = env("DATABASE_URL")
 }
 
 model User {
