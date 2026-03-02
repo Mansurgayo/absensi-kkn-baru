@@ -1,19 +1,13 @@
 const { execSync } = require('child_process');
 
 try {
-  // Set DATABASE_URL if not already set (use local SQLite)
+  // DATABASE_URL must be set in environment for production
   if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = 'file:./prisma/dev.db';
-    console.log('[build] DATABASE_URL not set, using fallback: file:./prisma/dev.db');
-  } else {
-    console.log('[build] DATABASE_URL detected, using:', process.env.DATABASE_URL);
-    
-    // Ensure DATABASE_URL has file: protocol for SQLite
-    if (!process.env.DATABASE_URL.startsWith('file:')) {
-      process.env.DATABASE_URL = `file:${process.env.DATABASE_URL}`;
-      console.log('[build] formatted DATABASE_URL with file: protocol');
-    }
+    console.error('[build] ERROR: DATABASE_URL is not set in environment variables');
+    process.exit(1);
   }
+  
+  console.log('[build] DATABASE_URL detected, running migrations...');
   
   console.log('[build] running prisma migrations...');
   execSync('npx prisma migrate deploy', { stdio: 'inherit' });
