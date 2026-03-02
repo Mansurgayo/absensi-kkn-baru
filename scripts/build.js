@@ -18,6 +18,13 @@ try {
   console.log('[build] running prisma migrations...');
   execSync('npx prisma migrate deploy', { stdio: 'inherit' });
   
+  console.log('[build] creating/updating admin user...');
+  try {
+    execSync('node scripts/create-admin.js', { stdio: 'inherit' });
+  } catch (err) {
+    console.log('[build] admin setup completed or skipped');
+  }
+  
   console.log('[build] running next build');
   execSync('npx next build', { stdio: 'inherit' });
 } catch (err) {
